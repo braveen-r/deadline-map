@@ -30,3 +30,33 @@ def test_dispatch_report_alerts_webhooks_telegram_and_email():
 
     assert isinstance(sent, list)
     assert len(posted) + len(sent_emails) >= 0
+
+
+def test_alert_config_from_env_loads_dotenv(tmp_path, monkeypatch):
+    from app.alerts.config import alert_config_from_env
+
+    for var in (
+        "SLACK_WEBHOOK_URL",
+        "TEAMS_WEBHOOK_URL",
+        "DISCORD_WEBHOOK_URL",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "ALERT_EMAIL_RECIPIENT",
+        "SMTP_HOST",
+        "ALERT_DAYS",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "SLACK_WEBHOOK_URL=https://hooks.slack.test/abc\n"
+        "SMTP_HOST=smtp.internal\n"
+        "ALERT_DAYS=14,7,1\n",
+        encoding="utf-8",
+    )
+
+    cfg = alert_config_from_env(env_file)
+    assert cfg["slack_webhook_url"] == "https://hooks.slack.test/abc"
+    assert cfg["smtp_host"] == "smtp.internal"
+    assert cfg["alert_days"] == (14, 7, 1)
+    assert cfg["discord_webhook_url"] is None
