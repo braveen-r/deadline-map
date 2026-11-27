@@ -9,6 +9,8 @@ import uvicorn
 from app.graph.blast_radius import compute_blast_radius, evaluate_manual_resource
 from app.history.store import SnapshotStore
 from app.inventory.loader import load_inventory_from_text
+from app.alerts.config import alert_config_from_env
+from app.alerts.notifier import dispatch_report_alerts
 from app.metrics import render_prometheus_metrics
 from app.probes.domain_rdap import probe_domain
 from app.probes.models import ProbeResult
@@ -78,6 +80,16 @@ def status_cmd(
         "--metrics-out",
         help="Optional file path to write Prometheus textfile metrics.",
     ),
+    alert: bool = typer.Option(
+        False,
+        "--alert",
+        help="Dispatch alerts using environment variables or .env configuration.",
+    ),
+    env_file: Path = typer.Option(
+        Path(".env"),
+        "--env-file",
+        help="Path to .env file for alert credentials.",
+    ),
 ) -> None:
     """Show deadline status and service blast radius."""
     report = run_checks(file, window_days=window, offline=offline)
@@ -107,6 +119,11 @@ def status_cmd(
         f"Blast radius ({report.window_days}d): {report.services_at_risk_count} service(s) "
         f"affected by {report.deadlines_in_window_count} deadline(s)."
     )
+
+    if alert:
+        sent = dispatch_report_alerts(report, **alert_config_from_env(env_file))
+        channels = ", ".join(sent) if sent else "none"
+        typer.echo(f"Alerts dispatched: {len(sent)} ({channels})")
 
 
 def serve_cmd(
