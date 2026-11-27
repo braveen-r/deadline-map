@@ -6,3 +6,4 @@ __pycache__/
 *.prom
 frontend/node_modules/
 frontend/dist/
+*.egg-info/
