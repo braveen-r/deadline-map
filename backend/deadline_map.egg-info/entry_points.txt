@@ -1,0 +1,2 @@
+[console_scripts]
+deadline-map = app.cli:app

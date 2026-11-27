@@ -1,0 +1,62 @@
+version: 1
+
+thresholds:
+  warning_days: 30
+  critical_days: 7
+
+resources:
+  - id: cert-wildcard-braveenr
+    kind: tls_cert
+    target: braveenr.linklee.in
+    port: 443
+    owner: Braveen R
+    renewal_hint: "Renew TLS certificate via DNS/HTTP-01 challenge and reload reverse proxy"
+
+  - id: domain-braveenr
+    kind: domain
+    target: linklee.in
+    owner: Braveen R
+    renewal_hint: "Renew domain registration in registrar dashboard"
+
+  - id: runtime-node-20
+    kind: runtime
+    product: nodejs
+    cycle: "20"
+    owner: Braveen R
+    renewal_hint: "Upgrade Dockerfile base image to node:22-alpine and run CI tests"
+
+  - id: token-ghcr-ci
+    kind: token
+    rotated_on: 2026-09-01
+    rotation_days: 90
+    owner: Braveen R
+    renewal_hint: "Generate a new scoped PAT/token and update GitHub Actions secrets"
+
+  - id: trial-cloud-db
+    kind: trial
+    expires_on: 2026-12-15
+    owner: Braveen R
+    renewal_hint: "Export data with DuckDB backup or migrate before free tier ends"
+
+services:
+  - name: portfolio-web
+    criticality: high
+    depends_on:
+      - resource: cert-wildcard-braveenr
+        impact: "HTTPS fails with browser TLS warning"
+      - resource: domain-braveenr
+        impact: "Public DNS resolution stops"
+
+  - name: gitops-devsecops-k8s
+    criticality: high
+    depends_on:
+      - resource: runtime-node-20
+        impact: "Base image loses upstream security patches"
+      - resource: token-ghcr-ci
+        impact: "CI container image push to GHCR fails"
+
+  - name: focus-ledger-demo
+    criticality: medium
+    depends_on:
+      - resource: trial-cloud-db
+        impact: "Hosted demo database pauses"

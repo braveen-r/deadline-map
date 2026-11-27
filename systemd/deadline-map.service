@@ -1,0 +1,13 @@
+[Unit]
+Description=Run deadline-map infrastructure deadline & blast-radius check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Projects/deadline-map
+ExecStart=%h/Projects/deadline-map/.venv/bin/deadline-map status \
+  --file %h/Projects/deadline-map/examples/deadlines.yml \
+  --window 14 \
+  --db %h/.local/share/deadline-map/snapshots.duckdb \
+  --metrics-out %h/.local/share/deadline-map/metrics.prom
