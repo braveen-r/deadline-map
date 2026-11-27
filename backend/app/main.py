@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.alerts.config import alert_config_from_env
+from app.alerts.notifier import dispatch_report_alerts
 from app.cli import run_checks
 from app.history.store import SnapshotStore
 from app.metrics import render_prometheus_metrics
@@ -25,7 +27,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
 
@@ -109,6 +111,15 @@ def create_app(
         ]
         items = [dict(zip(columns, row)) for row in rows]
         return {"count": len(items), "items": items}
+
+    @app.post("/api/alerts/dispatch")
+    def trigger_alerts(
+        window: int = Query(default=14, ge=1, le=365),
+        offline: bool = default_offline,
+    ):
+        report = run_checks(inventory_path, window_days=window, offline=offline)
+        sent = dispatch_report_alerts(report, **alert_config_from_env())
+        return {"sent_count": len(sent), "channels": sent}
 
     return app
 
