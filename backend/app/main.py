@@ -83,7 +83,7 @@ def create_app(
             rows = conn.execute(
                 """
                 SELECT
-                    recorded_at,
+                    CAST(recorded_at AS VARCHAR) AS recorded_at,
                     as_of,
                     resource_id,
                     kind,
