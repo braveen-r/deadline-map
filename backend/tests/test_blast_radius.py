@@ -1,18 +1,19 @@
 from datetime import date
+from pathlib import Path
 
 from app.graph.blast_radius import classify_days, compute_blast_radius
 from app.inventory.loader import load_inventory_file
 
 
 def test_classify_days_thresholds():
-    assert classify_days(0) == "critical"
-    assert classify_days(7) == "critical"
-    assert classify_days(14) == "warning"
-    assert classify_days(45) == "healthy"
+    assert classify_days(0, 14, 7) == "critical"
+    assert classify_days(7, 14, 7) == "critical"
+    assert classify_days(14, 14, 7) == "warning"
+    assert classify_days(45, 14, 7) == "healthy"
 
 
 def test_blast_radius_sorts_critical_first_and_counts_services():
-    inv = load_inventory_file("examples/deadlines.yml")
+    inv = load_inventory_file(Path("examples/deadlines.yml"))
     report = compute_blast_radius(inv, as_of=date(2026, 11, 27), window_days=30, offline=True)
 
     assert len(report.impacts) >= 1

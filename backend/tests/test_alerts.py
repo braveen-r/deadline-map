@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock
+from pathlib import Path
 
 from app.alerts.notifier import dispatch_report_alerts
 from app.graph.blast_radius import compute_blast_radius
@@ -7,7 +7,7 @@ from app.inventory.loader import load_inventory_file
 
 
 def _sample_report():
-    inv = load_inventory_file("examples/deadlines.yml")
+    inv = load_inventory_file(Path("examples/deadlines.yml"))
     return compute_blast_radius(inv, as_of=date(2026, 11, 27), window_days=30, offline=True)
 
 
@@ -40,4 +40,4 @@ def test_dispatch_report_alerts_webhooks_telegram_and_email():
     )
 
     assert isinstance(result, dict)
-    assert len(posted) >= 1 or len(sent_emails) >= 1 or MagicMock().called is False
+    assert len(posted) >= 1 or len(sent_emails) >= 1
