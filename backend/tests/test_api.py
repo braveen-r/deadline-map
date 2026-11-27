@@ -48,3 +48,29 @@ def test_health_status_and_metrics_endpoints():
     metrics = client.get("/metrics?window=14&offline=true")
     assert metrics.status_code == 200
     assert "deadline_map_services_at_risk" in metrics.text
+
+
+def test_post_alerts_dispatch_endpoint(monkeypatch):
+    import app.main as main_module
+
+    recorded_kwargs = {}
+
+    def fake_dispatch(report, **kwargs):
+        recorded_kwargs.clear()
+        recorded_kwargs.update(kwargs)
+        return ["slack: ok", "discord: ok"]
+
+    monkeypatch.setattr(main_module, "dispatch_report_alerts", fake_dispatch)
+
+    app = create_app(default_offline=True)
+    client = TestClient(app)
+
+    response = client.post("/api/alerts/dispatch?window=14&offline=true")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["sent_count"] == 2
+    assert body["channels"] == ["slack: ok", "discord: ok"]
+    assert "smtp_host" in recorded_kwargs
+
+    invalid = client.post("/api/alerts/dispatch?window=0")
+    assert invalid.status_code == 422
