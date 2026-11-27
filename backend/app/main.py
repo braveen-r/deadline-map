@@ -47,6 +47,10 @@ def create_app(
             "endpoints": ["/health", "/api/status", "/api/history", "/metrics", "/docs"],
         }
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return PlainTextResponse("", status_code=204)
+
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
