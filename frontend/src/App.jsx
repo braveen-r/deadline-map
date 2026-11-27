@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8001";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
 const NAV_ITEMS = [
   { id: "overview", label: "Overview" },
@@ -543,7 +543,7 @@ export default function App() {
               <h2 style={{ margin: "0 0 4px", fontSize: 15 }}>Runtime &amp; Probe Settings</h2>
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
                 <input type="checkbox" checked={offline} onChange={(e) => setOffline(e.target.checked)} />
-                Offline mode (skip live TLS / RDAP / EOL external lookups)
+                Offline mode (skip live TLS, RDAP, and EOL external lookups; uncheck for live probes)
               </label>
               <div style={{ fontSize: 12, color: "#8993A4" }}>
                 API Base URL: <code style={{ color: "#E5E7EB" }}>{API_BASE}</code>
